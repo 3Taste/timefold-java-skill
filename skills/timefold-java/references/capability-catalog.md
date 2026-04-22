@@ -2,7 +2,7 @@
 
 > 按"问题原语"组织。每条能力 = 一个建模动作。遇到新需求时，先在 [modeling-methodology.md](modeling-methodology.md) 走 6 步法识别需要哪些能力，再到本目录找对应注解 / API。
 >
-> 所有签名来自 `timefold-solver/core/src/main/java/ai/timefold/solver/core/api/`，对齐版本 1.31+。
+> 所有签名来自 `timefold-solver/core/src/main/java/ai/timefold/solver/core/api/`，对齐版本 1.33+。
 
 ---
 
@@ -362,3 +362,105 @@ solverJob.addProblemChange((solution, problemChangeDirector) -> {
 | 设备能力匹配（动态值域） | §6 entity-level @ValueRangeProvider |
 | 多目标加权可调 | §7 BendableScore + §8.2 ConstraintWeightOverrides |
 | 大规模（>10k 实体） | §11 Nearby Selection + §7 *LongScore |
+| 区间聚类 / 间隙检测 | §13 toConnectedRanges |
+| 方案对比 | §14 SolutionManager.diff() (Preview) |
+| 自定义 Move | §15 Neighborhoods API (Preview) |
+| 新元启发式 | §16 Diversified Late Acceptance (Preview) |
+
+---
+
+## §13 区间聚类（Connected Ranges）
+
+**解决的问题**：将一组有起止点的区间（时间段、空间范围）聚类为"连通区间"，检测区间间的间隙和重叠数量。
+**API**：`ConstraintCollectors.toConnectedRanges(startFn, endFn, differenceFn)`
+**时间特化**：`ConstraintCollectors.toConnectedTemporalRanges(startFn, endFn)` → 差值类型为 `Duration`
+
+**返回类型**：`ConnectedRangeChain<IntervalType_, PointType_, DifferenceType_>`
+- `.getConnectedRanges()` — 所有连通区间（包含最小/最大重叠数、包含的元素列表）
+- `.getBreaks()` — 所有间隙（包含起止点和长度）
+
+**典型场景**：
+- 检测设备调度中的空闲间隙
+- 分析排班中的连续工作段
+- 检测资源占用的重叠度
+
+**模板**：
+```java
+return cf.forEach(Shift.class)
+    .groupBy(Shift::getEmployee,
+        ConstraintCollectors.toConnectedTemporalRanges(
+            Shift::getStart, Shift::getEnd))
+    .flattenLast(ConnectedRangeChain::getBreaks)
+    .filter((emp, brk) -> brk.length().toHours() < 8)
+    .penalize(HardSoftScore.ONE_HARD)
+    .asConstraint("At least 8h rest between shifts");
+```
+
+---
+
+## §14 方案对比（Solution Diff）— Preview
+
+**⚠️ Preview 特性**：需要 `<enablePreviewFeature>PLANNING_SOLUTION_DIFF</enablePreviewFeature>`
+
+**解决的问题**：比较两个方案之间的差异（哪些实体的变量值改变了、哪些被新增/移除）。
+**API**：`SolutionManager.diff(oldSolution, newSolution)` → `PlanningSolutionDiff<Solution_>`
+
+**包**：`ai.timefold.solver.core.preview.api.domain.solution.diff`
+**核心类**：
+- `PlanningSolutionDiff` — 顶层 diff，包含所有实体变更
+- `PlanningEntityDiff` — 单个实体的变量变更
+- `PlanningVariableDiff` — 单个变量的旧值/新值
+
+**典型场景**：
+- 重新求解后展示"方案变了哪里"
+- 增量更新 UI 展示
+- 方案审批（对比调整前后）
+
+---
+
+## §15 Neighborhoods API — Preview
+
+**⚠️ Preview 特性**：需要 `<enablePreviewFeature>NEIGHBORHOODS</enablePreviewFeature>`
+
+**解决的问题**：用声明式 API 定义自定义 Move（替代传统 Move Selector XML 配置），实现高性能的领域特定邻域搜索。
+
+**包**：`ai.timefold.solver.core.preview.api.move` / `ai.timefold.solver.core.preview.api.neighborhood`
+
+**核心概念**：
+- `Move` — 对当前解的一次扰动（如改变一个变量值、交换两个实体）
+- `MoveStream` — 声明式的 move 生成流（定义从哪些实体/变量生成哪些 move）
+- `Neighborhood` — 一组 MoveStream 的集合
+- `NeighborhoodProvider` — 自定义 Neighborhood 的入口
+
+**内置 Move 类型**（`preview.api.move.builtin`）：
+- `ChangeMove` / `SwapMove` — 单值变量
+- `ListChangeMove` / `ListSwapMove` — 列表变量
+- `ListAssignMove` / `ListUnassignMove` — 列表元素分配/取消
+- `CompositeMove` — 组合多个 move
+
+**测试工具**：`MoveTester` / `NeighborhoodTester` / `MoveTestContext`
+
+**注意**：此 API 处于活跃研发阶段，接口可能变更。适合需要高度定制 move 逻辑的高级场景。
+
+---
+
+## §16 Diversified Late Acceptance — Preview
+
+**⚠️ Preview 特性**：需要 `<enablePreviewFeature>DIVERSIFIED_LATE_ACCEPTANCE</enablePreviewFeature>`
+
+**解决的问题**：Late Acceptance 的改进变体，增加多样化机制避免搜索停滞。
+**论文**：Namazi et al., "Diversified Late Acceptance Search" (arXiv:1806.09328)
+
+**配置**：
+```xml
+<solver xmlns="https://timefold.ai/xsd/solver">
+  <enablePreviewFeature>DIVERSIFIED_LATE_ACCEPTANCE</enablePreviewFeature>
+  <localSearch>
+    <localSearchType>DIVERSIFIED_LATE_ACCEPTANCE</localSearchType>
+  </localSearch>
+</solver>
+```
+
+**接受策略**：如果当前 move 的分数与当前解分数相当、或优于 N 步前的最佳分数，则接受该 move。Late elements 列表通常更小。
+
+**何时用**：标准 Late Acceptance 表现平庸、搜索易停滞的场景。

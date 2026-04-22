@@ -54,7 +54,7 @@ Or just describe your scheduling problem — the skill triggers automatically on
 
 ## Requirements / 要求
 
-- Timefold Solver 1.31+ (`ai.timefold.solver`)
+- Timefold Solver 1.33+ (`ai.timefold.solver`)
 - Java 17+
 
 ## License

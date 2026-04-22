@@ -314,6 +314,38 @@ return cf.forEach(ProcessStep.class)
 
 ---
 
+## 类别 13：区间聚类 / 间隙检测（1.33+）
+
+### 13.1 连续工作时段间必须休息（使用 toConnectedTemporalRanges）
+```java
+return cf.forEach(Shift.class)
+    .groupBy(Shift::getEmployee,
+        ConstraintCollectors.toConnectedTemporalRanges(
+            Shift::getStart, Shift::getEnd))
+    .flattenLast(ConnectedRangeChain::getBreaks)
+    .filter((emp, brk) -> brk.length().toHours() < 8)
+    .penalize(HardSoftScore.ONE_HARD)
+    .asConstraint("At least 8h rest between shifts");
+```
+
+### 13.2 检测设备空闲间隙（使用 toConnectedRanges + long）
+```java
+return cf.forEach(Task.class)
+    .groupBy(Task::getEquipment,
+        ConstraintCollectors.toConnectedRanges(
+            Task::getStartMinute, Task::getEndMinute,
+            (a, b) -> b - a))
+    .flattenLast(ConnectedRangeChain::getBreaks)
+    .penalize(HardSoftScore.ONE_SOFT,
+        (equip, brk) -> (int) brk.length())
+    .asConstraint("Minimize equipment idle gaps");
+```
+
+> `toConnectedRanges(startFn, endFn, differenceFn)` — 通用版本，差值类型自定义。
+> `toConnectedTemporalRanges(startFn, endFn)` — 时间特化版本，差值为 `Duration`。
+
+---
+
 ## 关键 Joiners 速查
 
 | Joiner | 含义 |
@@ -335,6 +367,8 @@ return cf.forEach(ProcessStep.class)
 | `loadBalance(idFn, valueFn)` | 不公平度（专为均衡设计） |
 | `compose(c1, c2, ...)` | 多个 collector 同时算 |
 | `consecutive(idFn, indexFn)` | 连续序列分组 |
+| `toConnectedRanges(startFn, endFn, diffFn)` | 区间聚类 + 间隙检测（1.33+） |
+| `toConnectedTemporalRanges(startFn, endFn)` | 时间区间聚类（Duration 差值）（1.33+） |
 
 ---
 

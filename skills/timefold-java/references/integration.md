@@ -2,7 +2,7 @@
 
 > Timefold 支持三种集成方式：**Spring Boot**、**Quarkus**、**纯 JAR**。选一种贴上去即可用。
 >
-> 版本：对齐 timefold-solver 1.31+（使用 `ai.timefold.solver` group）。
+> 版本：对齐 timefold-solver 1.33+（使用 `ai.timefold.solver` group）。
 
 ---
 
@@ -15,7 +15,7 @@
     <dependency>
       <groupId>ai.timefold.solver</groupId>
       <artifactId>timefold-solver-bom</artifactId>
-      <version>1.31.0</version>
+      <version>1.33.0</version>
       <type>pom</type>
       <scope>import</scope>
     </dependency>
@@ -83,7 +83,7 @@ public class ScheduleController {
         solverManager.solveBuilder()
             .withProblemId(jobId)
             .withProblemFinder(repo::get)
-            .withBestSolutionConsumer(sol -> repo.put(jobId, sol))
+            .withBestSolutionEventConsumer(event -> repo.put(jobId, event.solution()))
             .run();
         return jobId;
     }
@@ -145,7 +145,7 @@ public class ScheduleResource {
         solverManager.solveBuilder()
             .withProblemId(jobId)
             .withProblemFinder(repo::get)
-            .withBestSolutionConsumer(s -> repo.put(jobId, s))
+            .withBestSolutionEventConsumer(event -> repo.put(jobId, event.solution()))
             .withExceptionHandler((id, ex) -> Log.error("Solve failed", ex))
             .run();
         return jobId;
@@ -252,3 +252,37 @@ solverManager.addProblemChange(jobId, (solution, director) -> {
 cp -r ~/.claude/skills/timefold-java/assets/skeleton/ ./my-scheduler
 ```
 然后按 [modeling-methodology.md](modeling-methodology.md) 的 6 步走，填充领域类 + 约束即可。
+
+---
+
+## 8. 1.33 新增集成 API
+
+### 8.1 SolverJobBuilder 事件回调（1.28+ 推荐）
+
+旧 API（deprecated，将移除）→ 新 API：
+
+| 旧方法 | 新方法 |
+|---|---|
+| `withBestSolutionConsumer(Consumer<Solution>)` | `withBestSolutionEventConsumer(Consumer<NewBestSolutionEvent<Solution>>)` |
+| `withFinalBestSolutionConsumer(Consumer<Solution>)` | `withFinalBestSolutionEventConsumer(Consumer<...>)` |
+| `withFirstInitializedSolutionConsumer(Consumer<Solution>)` | `withFirstInitializedSolutionEventConsumer(Consumer<...>)` |
+
+新 API 通过 event 对象提供更丰富的上下文（不仅仅是 solution）。
+
+### 8.2 SolutionManager.diff()（Preview，1.33+）
+
+对比两个方案的差异：
+```java
+// 需要启用 Preview：PLANNING_SOLUTION_DIFF
+PlanningSolutionDiff<Schedule> diff = solutionManager.diff(oldSchedule, newSchedule);
+// diff 包含每个实体的变量变更列表
+```
+
+### 8.3 SolutionManager.recommendAssignment()
+
+快速评估一个实体/元素的所有可能分配方案，按分数排序返回推荐列表：
+```java
+List<RecommendedAssignment<Room, HardSoftScore>> recommendations =
+    solutionManager.recommendAssignment(solution, unassignedLesson, Lesson::getRoom);
+// recommendations 按分数从优到劣排序
+```

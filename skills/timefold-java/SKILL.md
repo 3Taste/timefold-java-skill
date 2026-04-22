@@ -62,6 +62,10 @@ description: Use when user asks to design or implement a scheduling, planning, o
 | 分数解释 | `SolutionManager.analyze()` | §9.3 |
 | 实时变更 | `ProblemChange` | §10 |
 | 大规模加速 | Nearby Selection | §11 |
+| 区间聚类 / 间隙检测 | `toConnectedRanges` / `toConnectedTemporalRanges` | §13 |
+| 方案对比（Preview） | `SolutionManager.diff()` | §14 |
+| 自定义 Move（Preview） | Neighborhoods API | §15 |
+| 新元启发式（Preview） | Diversified Late Acceptance | §16 |
 
 ## 约束食谱快速指引
 
@@ -76,6 +80,7 @@ description: Use when user asks to design or implement a scheduling, planning, o
 - **负载均衡** → `ConstraintCollectors.loadBalance` 或平方惩罚
 - **换型成本** → filter has previous + penalize(changeover cost)
 - **准时奖励** / **迟到惩罚** → filter + reward / penalize
+- **区间聚类 / 间隙** → `toConnectedRanges` / `toConnectedTemporalRanges`
 
 ## 求解器配置
 
@@ -83,6 +88,7 @@ description: Use when user asks to design or implement a scheduling, planning, o
 - Termination 组合：`spent-limit` + `unimproved-spent-limit`
 - 大规模：Nearby Selection + multi-thread
 - 可复现：`environment-mode=REPRODUCIBLE` + `random-seed`
+- Preview 特性：`enablePreviewFeature`（Diversified Late Acceptance / Neighborhoods / Solution Diff）
 
 ## 集成方式
 
@@ -116,4 +122,4 @@ description: Use when user asks to design or implement a scheduling, planning, o
 
 ## 版本注意
 
-对齐 **timefold-solver 1.31+**（group `ai.timefold.solver`；旧版 `org.optaplanner.*` 已迁移）。Java 17+ required。
+对齐 **timefold-solver 1.33+**（group `ai.timefold.solver`；旧版 `org.optaplanner.*` 已迁移）。Java 17+ required。

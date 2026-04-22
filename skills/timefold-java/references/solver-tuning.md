@@ -1,6 +1,6 @@
 # Solver Tuning：求解器配置与调优
 
-> 所有配置项对齐 `timefold-solver/core/src/main/resources/solver.xsd`（版本 1.31+）。
+> 所有配置项对齐 `timefold-solver/core/src/main/resources/solver.xsd`（版本 1.33+）。
 >
 > 两种配置方式：
 > - **SolverConfig API**（纯 JAR）
@@ -99,6 +99,7 @@ timefold.solver.termination.unimproved-spent-limit=30s
 - `TABU_SEARCH`（避免循环，适合小规模）
 - `SIMULATED_ANNEALING`（跳出局部最优）
 - `HILL_CLIMBING`（快但易卡局部）
+- `DIVERSIFIED_LATE_ACCEPTANCE`（Preview，Late Acceptance 改进版，增加多样化机制避免停滞）
 
 ---
 
@@ -213,3 +214,32 @@ factory.buildPlannerBenchmark(problems).benchmarkAndShowReportInBrowser();
 | 结果不可复现 | `environment-mode=REPRODUCIBLE` + 固定 random-seed |
 | ConstraintProvider 报错 | 单跑 `ConstraintVerifier` 单测隔离问题 |
 | shadow 字段为 null | 检查 `@ShadowSources` 是否声明了全部依赖 |
+
+---
+
+## 11. Preview 特性（1.33+）
+
+Timefold 1.33 引入 Preview 特性机制。这些特性功能完整但 API 可能变更，需显式启用。
+
+### 11.1 启用方式
+```xml
+<solver xmlns="https://timefold.ai/xsd/solver">
+  <enablePreviewFeature>DIVERSIFIED_LATE_ACCEPTANCE</enablePreviewFeature>
+  <enablePreviewFeature>NEIGHBORHOODS</enablePreviewFeature>
+  <enablePreviewFeature>PLANNING_SOLUTION_DIFF</enablePreviewFeature>
+  ...
+</solver>
+```
+
+Spring Boot：
+```properties
+timefold.solver.enable-preview-feature=DIVERSIFIED_LATE_ACCEPTANCE
+```
+
+### 11.2 可用 Preview 特性
+
+| 特性 | 用途 | 详见 |
+|---|---|---|
+| `DIVERSIFIED_LATE_ACCEPTANCE` | Late Acceptance 改进版元启发式 | capability-catalog §16 |
+| `NEIGHBORHOODS` | 声明式自定义 Move API | capability-catalog §15 |
+| `PLANNING_SOLUTION_DIFF` | 两个方案之间的差异对比 | capability-catalog §14 |

@@ -200,3 +200,30 @@ src/test/java/
 3. **`given` 传入顺序不重要**：约束流自己会匹配
 4. **分数是绝对值**：`penalizesBy(1)` 的意思是触发 1 个 match；动态权重（`penalize(.., weightFn)`）则是权重之和
 5. **Joiners.filtering vs .filter 差异可能导致测试数差**：和生产代码保持一致
+
+---
+
+## 9. Neighborhoods 测试（Preview，1.33+）
+
+如果使用了 Neighborhoods API 自定义 Move，用 `MoveTester` / `NeighborhoodTester` 验证：
+
+### 9.1 MoveTester — 验证单个 Move
+```java
+MoveTestContext<Schedule> context = MoveTestContext.create(Schedule.class, ...);
+MoveTester<Schedule> tester = context.createMoveTester();
+// 构造 move 并验证其正确性
+```
+
+### 9.2 NeighborhoodTester — 验证 Neighborhood 生成的 Move 集合
+```java
+NeighborhoodTestContext<Schedule> context = NeighborhoodTestContext.create(Schedule.class, ...);
+NeighborhoodTester<Schedule> tester = context.createNeighborhoodTester(myNeighborhoodProvider);
+// 验证生成的 move 集合覆盖预期场景
+```
+
+### 9.3 Solution Diff 断言
+```java
+PlanningSolutionDiff<Schedule> diff = solutionManager.diff(oldSolution, newSolution);
+assertThat(diff.entityDiffs()).isNotEmpty();
+// 验证特定实体的变量变更
+```
