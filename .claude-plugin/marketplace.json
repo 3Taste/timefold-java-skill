@@ -3,8 +3,8 @@
   "name": "timefold-java-skill",
   "description": "6-step methodology for building scheduling/planning apps with Timefold Solver (Java). Covers domain modeling, constraint design, solver tuning, and testing patterns.",
   "owner": {
-    "name": "sanwei",
-    "url": "https://github.com/sanwei"
+    "name": "3Taste",
+    "url": "https://github.com/3Taste"
   },
   "plugins": [
     {

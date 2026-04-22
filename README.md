@@ -7,7 +7,7 @@ Claude Code 技能插件 — 引导你使用 [Timefold Solver](https://timefold.
 ## Install / 安装
 
 ```bash
-claude plugins add sanwei/timefold-java-skill
+claude plugins add 3Taste/timefold-java-skill
 ```
 
 ## What it does / 功能
