@@ -7,7 +7,14 @@ Claude Code 技能插件 — 引导你使用 [Timefold Solver](https://timefold.
 ## Install / 安装
 
 ```bash
-claude plugins add 3Taste/timefold-java-skill
+# Step 1: Add marketplace / 添加市场源
+claude plugins marketplace add 3Taste/timefold-java-skill
+
+# Step 2: Install plugin / 安装插件
+claude plugins install timefold-java-skill@timefold-java-skill
+
+# For project-scoped install / 项目级安装
+claude plugins install timefold-java-skill@timefold-java-skill --scope project
 ```
 
 ## What it does / 功能
