@@ -1,0 +1,17 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "timefold-java-skill",
+  "description": "6-step methodology for building scheduling/planning apps with Timefold Solver (Java). Covers domain modeling, constraint design, solver tuning, and testing patterns.",
+  "owner": {
+    "name": "sanwei",
+    "url": "https://github.com/sanwei"
+  },
+  "plugins": [
+    {
+      "name": "timefold-java-skill",
+      "description": "Timefold Java scheduling/planning skill — 6-step modeling methodology with constraint cookbook, solver tuning, and starter skeleton.",
+      "source": "./",
+      "category": "development"
+    }
+  ]
+}

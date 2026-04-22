@@ -1,0 +1,8 @@
+{
+  "name": "timefold-java-skill",
+  "description": "Claude Code skill for designing and implementing scheduling, planning, and resource-allocation systems with Timefold Solver (Java). Guides through a 6-step modeling methodology from business requirements to domain classes, constraints, and solver config.",
+  "author": {
+    "name": "sanwei",
+    "url": "https://github.com/sanwei"
+  }
+}
